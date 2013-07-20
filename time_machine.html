@@ -1,0 +1,682 @@
+<html>
+<head>
+	<title>
+		jquery fadeout
+	</title>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+	<script type="text/javascript" src="./js/jquery-1.8.0.min.js"></script>
+	<script type="text/javascript" src="./js/jquery.fisheye.js"></script>
+	<script language="javascript"  type="text/javascript">
+		$(document).ready(function() {
+			test = 0;
+			//#biuuu sidebar load style
+			$("#biuuu .year").each(function(){
+				$(this).css("width","65%").next().css("width","63%").next().css("width","60%").next().css("width","55%").next().css("width","50%").next().css("width","47%").next().css("width","45%");
+				$(this).css("width","65%").prev().css("width","63%").prev().css("width","60%").prev().css("width","55%").prev().css("width","50%").prev().css("width","47%").prev().css("width","45%");
+
+			});
+
+			//stars effect javascript, related with div #bg_stars
+			//initial parameters set up
+			xL=500; //numbers of stars in the view sight
+			fly_state = 0;
+			start_state = 1;
+			xH=0;	//window height
+			xW=0;	//window width
+			xR=0;	//random despatch rate
+			xE=0;	//random adjust parameter
+			xMY=0;	//center of the window (top), used when stars flying inside as the target point
+			xMX=0;	//center of the window (left), used when stars flying inside as the target point
+			xOY=new Array();	//out of the window (top),used when stars flying outside as the target point
+			xOX=new Array();	//out of the window (left),used when stars flying outside as the target point
+			xWd=0;	//disappear rectangle (width), used when stars flying inside as the disappear condition
+			xHd=0;	//disappear rectangle (height), used when stars flying inside as the disappear condition
+
+			xF=new Array();
+			xY=new Array();		//Position of the stars setted (top)
+			xX=new Array();		//Position of the stars setted (top)
+			xS=new Array();		//flying step scale xS along start point to the target point
+			xA=new Array();		//flying start point (top)
+			xB=new Array();		//flying start point (left)
+			ini=new Array();	//stars color
+			cl=new Array('#fff000','#0000FF','#ff0000','#00ff00','#ff00ff','#ffa500');//yellow,blue,red,green,purple,orange
+
+			
+			
+			
+			//HTML frame insert div #bg_stars
+			var star_html = '<div id="xouter" style="position:absolute;top:0px;left:0px"><div style="position:relative">';
+			for (i=0; i < xL; i++){
+				star_html = star_html + '<div id="xie" style="position:absolute;top:0;left:0;width:10px;height:10px;' + 'font-family:Courier New;font-size:50px;color:#ffffff">.</div>';
+			}
+			star_html = star_html + '</div></div>';
+			document.getElementById("bg_stars").innerHTML = star_html ;
+
+			//Initial Placement
+			function Set(){
+				//flying outside
+				for (i=0; i < xL; i++){
+					xH=window.document.body.offsetHeight;
+					xW=window.document.body.offsetWidth;
+					xA[i]=xH/2;
+					xB[i]=xW/2;
+					xS[i]=Math.random()*0.0007+0.0005;
+					xR=Math.round(Math.random()*3);
+					xE=Math.random()-0.5;
+					xY[i] = window.document.body.clientHeight/2;
+					xX[i] = window.document.body.clientWidth/2;
+					n_distant = Math.round((Math.random()-0.5)*10) + 5.7;
+					//initial flying target point
+					if (xR == 3) {
+						// left part
+						xOX[i]=(-1*xW/2)*n_distant;
+						xOY[i]=(xE*2*xH+xH/2)*n_distant;
+					}
+					if (xR == 2) {
+						// top part
+						xOX[i]=(xE*2*xW+xW/2)*n_distant;
+						xOY[i]=(-1*xH/2)*n_distant;
+					}
+					if (xR == 1) {
+						// right part
+						xOX[i]=(3*xW/2)*n_distant;
+						xOY[i]=(xE*2*xH+xH/2)*n_distant;
+					}
+					if (xR == 0) {
+						// bottom part
+						xOX[i]=(xE*2*xW+xW/2)*n_distant;
+						xOY[i]=(3*xH/2)*n_distant;
+					}
+					xF[i]=10;	//initial stars size					
+				}
+			}
+			Set();
+
+			//Set stars position
+			//flying outside
+			function Assign_out(){
+				xouter.style.top=document.body.scrollTop;	//view sight frame
+				for (i=0; i < xL; i++){
+					xF[i]+=xS[i]*25;	//stars size changing smaller
+					if (xF[i] > xW/14) xF[i] = xW/14;	//max stars size
+					xie[i].style.top =xY[i];
+					xie[i].style.left=xX[i];
+					xie[i].style.fontSize=xF[i];	//stars size
+					xie[i].style.filter='glow(color='+ini[i]+', strength='+xF[i]/3+')';	//glowing effect for IE
+				}
+			}
+			function Assign_in(){
+				xouter.style.top=document.body.scrollTop;
+				for (i=0; i < xL; i++){
+					xF[i]-=xS[i]*5;
+					if (xF[i] < 10) xF[i]=10;
+					xie[i].style.top =xY[i];
+					xie[i].style.left=xX[i];
+					xie[i].style.fontSize=xF[i];
+					xie[i].style.filter='glow(color='+ini[i]+', strength='+xF[i]/3+')';
+				}
+			}
+			function fly(){
+				
+				var N=Math.floor(Math.random()*cl.length);	//glowing color
+				//flying outside
+				if (fly_state == 2) {
+					xMY=window.document.body.clientHeight/2;//flying inside target point
+					xMX=window.document.body.clientWidth/2;
+					xWd=Math.round(Math.random()*30+80);//stars disappear inside this rectangle
+					xHd=Math.round(Math.random()*30+80);
+					// xS[i]= xS[i] * 10000;
+					for (i=0; i < xL; i++){						
+						xS[i]= xS[i] * 1.05;
+						xY[i]=xA[i]+=(xMY-xA[i])*(xS[i]); //flying step scale xS along start point to the target            
+						xX[i]=xB[i]+=(xMX-xB[i])*(xS[i]);
+						
+						//disappear rectangle 					
+						if ((xX[i] > xMX-xWd) && (xX[i] < xMX+xWd) && (xY[i] > xMY-xHd) && (xY[i] < xMY+xHd)){					 
+							xH=window.document.body.offsetHeight;
+							xW=window.document.body.offsetWidth;
+							xA[i]=Math.round(Math.random()*xH);
+							xB[i]=Math.round(Math.random()*xW);
+
+							// if (fly_state==2) {
+							// 	xS[i]=Math.random()*0.016+0.012;
+							// } else{
+							// 	xS[i]=Math.random()*0.014+0.01;
+							// };
+							xS[i]=Math.random()*0.016+0.012;
+							xR=Math.round(Math.random()*3);
+							xE=Math.round(Math.random()*50+50);
+							n_distant = Math.round((Math.random()-0.5)*10) + 5.7;
+							if (xR == 3) {
+								//left part
+								xB[i]=-xE;
+								xOX[i]=(-1*xW/2)*n_distant;
+								xOY[i]=(xE*2*xH+xH/2)*n_distant;
+							}
+							if (xR == 2){
+								//top part
+								xA[i]=-xE;
+								xOX[i]=(xE*2*xW+xW/2)*n_distant;
+								xOY[i]=(-1*xH/2)*n_distant;
+							}
+							if (xR == 1) {
+								// right part
+								xB[i]=xW+xE;
+								xOX[i]=(3*xW/2)*n_distant;
+								xOY[i]=(xE*2*xH+xH/2)*n_distant;
+							}
+							if (xR == 0) {
+								//bottom part
+								xA[i]=xH+xE;
+								xOX[i]=(xE*2*xW+xW/2)*n_distant;
+								xOY[i]=(3*xH/2)*n_distant;
+							}
+							xF[i] = 20;
+						}
+
+					}
+					Assign_in();
+
+				} else{
+					for (i=0; i < xL; i++){
+						if (fly_state==1) {
+							xS[i]= xS[i] * 1.1;
+						} else if(start_state != 1){
+							xS[i]=Math.random()*0.00007+0.00005;
+						};
+						xY[i]=xA[i]+=(xOY[i]-xA[i])*(xS[i]);	//flying step scale xS along start point to the target point             
+						xX[i]=xB[i]+=(xOX[i]-xB[i])*(xS[i]);
+						
+						//disappear rectangle				
+						if ((xX[i] > xW) || (xX[i] < 0) || (xY[i] > xH) || (xY[i] < 0)){
+							if((i == xL) && (start_state == 1)){start_state = 0;};				 
+							xH=window.document.body.offsetHeight;
+							xW=window.document.body.offsetWidth;
+							if (fly_state==1) {
+								xS[i]=Math.random()*0.00008+0.00006;
+							} else{
+								xS[i]=Math.random()*0.00007+0.00005;
+							};
+							
+							xR=Math.round(Math.random()*3);
+							xE=Math.random()-0.5;
+							xG=Math.round(Math.random()*40+50);
+							xY[i] = window.document.body.clientHeight/2;
+							xX[i] = window.document.body.clientWidth/2;
+							n_distant = Math.round((Math.random()-0.5)*10) + 5.7;
+							//initial flying target point
+							if (xR == 3) {
+								// left part
+								xA[i]=xH/2;
+								xB[i]=xW/2-xG;
+								xOX[i]=(-1*xW/2)*n_distant;
+								xOY[i]=(xE*2*xH+xH/2)*n_distant;
+							}
+							if (xR == 2) {
+								// top part
+								xA[i]=xH/2-xG;
+								xB[i]=xW/2;
+								xOX[i]=(xE*2*xW+xW/2)*n_distant;
+								xOY[i]=(-1*xH/2)*n_distant;
+							}
+							if (xR == 1) {
+								// right part
+								xA[i]=xH/2;
+								xB[i]=xW/2+xG;
+								xOX[i]=(3*xW/2)*n_distant;
+								xOY[i]=(xE*2*xH+xH/2)*n_distant;
+							}
+							if (xR == 0) {
+								// bottom part
+								xA[i]=xH/2+xG;
+								xB[i]=xW/2;
+								xOX[i]=(xE*2*xW+xW/2)*n_distant;
+								xOY[i]=(3*xH/2)*n_distant;
+							}
+							xF[i]=10;	//initial stars size
+						}
+					}
+					Assign_out();
+				};				
+				
+				setTimeout(fly,10);
+			}
+			fly();
+
+			//time machine content window effect
+			//initial parameters
+			show_divs = 3;	//display divs number
+			space_top = 25;
+			space_left = (100-40)/show_divs/2;
+			ini_bgclr_r = 0;
+			ini_bgclr_g = 69;
+			ini_bgclr_b = 115;
+			space_clr = Math.floor((255-Math.max(ini_bgclr_r,ini_bgclr_g,ini_bgclr_b))/show_divs);
+			prev_top = 0;	//initial current_top position
+			current_top = 0;
+			//initial first 3 div
+			for (var i = 0; i < show_divs; i++) {
+				top_px = i * (-1) * space_top;
+				left_percent = i * space_left;
+				layer_index = show_divs + 1 - i;
+				bg_color_r = ini_bgclr_r + i * space_clr;
+				bg_color_g = ini_bgclr_g + i * space_clr;
+				bg_color_b = ini_bgclr_b + i * space_clr;
+				width_percent = 100 - 2* left_percent;
+				$(".frame>div").eq(i).css(
+					// "id","id_"+(i+1)
+					{
+						"top":top_px + "px",
+						"left":left_percent + "%",
+						"z-index":layer_index,
+						"width":width_percent + "%"
+					}				
+					);
+				$(".frame>div").eq(i).children(".time").css({
+					"background-color": "rgb(" + bg_color_r + "," + bg_color_g + "," + bg_color_b + ")"
+				});
+				
+			};
+
+			//initial div after third
+			$(".frame>div:gt(2)").each(function(){
+				$(this).addClass("bg");
+				$(this).css(
+					{
+						"top":show_divs *(-1) * space_top+"px",
+						"left":show_divs * space_left + "%",
+						"z-index":0,
+						"width":(100-2 * show_divs * space_left)+"%",
+						"display":"none"
+					}				
+					);
+			});
+			
+			//current_top position changed
+			$(".frame>div div.time").click(function(){
+
+				// current_top; //selected element that should shown top
+				current_top = $(this).parent().index();
+				disapper_show();
+			});
+			$("#biuuu li").click(function(){
+				var current_time = $(this).children().text();
+				if ($(this).hasClass("year")) { 
+					current_time = current_time + ".00.00";
+				}else{
+					current_time = current_time + ".99";
+				}; 
+				var prev_time = $(".frame>div").eq(prev_top).find(".time").text();
+				if (current_time < prev_time) {
+					var temp_top = prev_top;
+					for (var i = temp_top + 1; i < $(".frame>div").length; i++) {
+						temp_time = $(".frame>div").eq(i).find(".time").text();
+						if (current_time > temp_time) {current_top = i;break;};
+						if (i == ($(".frame>div").length-1)) {current_top = i;};
+					};
+					disapper_show();
+				} else if (current_time > prev_time) {
+					var temp_top = prev_top;
+					var has_later = 0;
+					for (var i = 0; i < temp_top; i++) {
+						temp_time = $(".frame>div").eq(i).find(".time").text();
+						if (current_time < temp_time) {has_later = 1;};
+						if ((has_later == 1) &&(current_time >= temp_time)) { current_top = i;break;};
+						if (i == (temp_top-1)&&(has_later == 0)) {current_top = 0;};
+					};
+					disapper_show();
+
+				};
+				
+			});
+			// stars background effect
+			function disapper_show(){
+				var disappear_to; //the last element that should disappear
+				var disappear_from;//the first element that should disappear
+				if (prev_top < current_top) {
+					fly_state = 1;
+					disappear_from = prev_top;
+					if (prev_top+show_divs - 1 < current_top) {
+						disappear_to = prev_top+show_divs;
+					} else{
+						disappear_to = current_top;
+					};
+				
+					//elements befor selected element disappear
+					var loop_array = $(".frame>div").slice(disappear_from,disappear_to);
+					for (var i = 0; i < loop_array.length; i++) {				
+						loop_array.eq(i).animate({
+							top:space_top+"px",
+							left:(-1) * space_left + "%",
+							width:(100 + 2 * space_left) + "%"
+						},500,"linear").delay("10").fadeOut("500");
+						// loop_array.eq(i).fadeOut(1000);
+						loop_array.eq(i).css({"z-index":show_divs + 2});
+						loop_array.eq(i).children(".time").css({"background-color":"#" + "rgb(" + ini_bgclr_r + "," + ini_bgclr_g + "," + ini_bgclr_b + ")"});
+						loop_array.eq(i).removeAttr("id");		
+					};
+					var loop_array = $(".frame>div").slice(disappear_to, current_top);
+					for (var i = 0; i < loop_array.length; i++) {				
+						loop_array.eq(i).css({
+							"display":"none",
+							"z-index":show_divs + 2,
+							"top":space_top + "%",
+							"left":(-1*space_left) + "%",
+							"width":(100 + 2 * space_left) + "%"
+						});
+						loop_array.eq(i).removeClass("bg").addClass("fg");		
+					};
+
+					//selected element and num=show_divs divs after it move and appear
+					var loop_array = $(".frame>div").slice(current_top,current_top+show_divs);
+					for (var i = 0; i < loop_array.length; i++) {
+						top_px = i * (-1) * space_top;
+						left_percent = i * space_left;
+						layer_index = show_divs + 1 - i;
+						bg_color_r = ini_bgclr_r + i * space_clr;
+						bg_color_g = ini_bgclr_g + i * space_clr;
+						bg_color_b = ini_bgclr_b + i * space_clr;
+						width_percent = 100 - 2* left_percent;
+						loop_array.eq(i).fadeIn(100).animate({
+							top:top_px +"px",
+							left:left_percent +"%",
+							width:width_percent +"%"
+						},1000,"linear").removeClass("bg").attr("id","id_"+(i+1));
+						loop_array.eq(i).css({"z-index":layer_index});
+						loop_array.eq(i).children(".time").css({"background-color": "rgb(" + bg_color_r + "," + bg_color_g + "," + bg_color_b + ")"});
+					};
+
+
+				}else if(current_top < prev_top){
+					fly_state = 2;
+					disappear_to = prev_top + show_divs;
+					if (current_top+show_divs > prev_top) {
+						disappear_from = current_top+show_divs;
+					} else{
+						disappear_from = prev_top;
+					};
+					//elements after selected element disappear
+					var loop_backarray = $(".frame>div").slice(disappear_from,disappear_to);
+					for (var j = loop_backarray.length - 1; j >= 0; j--) {
+						loop_backarray.eq(j).animate({
+							top:(-1) * show_divs * space_top+"px",
+							left:show_divs * space_left + "%",
+							width:(100 - 2 * show_divs* space_left) + "%"
+						},500,"linear").delay("10").fadeOut("500");
+						// loop_backarray.eq(j).fadeOut(1000);
+						loop_backarray.eq(j).css({"z-index":0});
+						loop_backarray.eq(j).children(".time").css({
+							"background-color":"#" + "rgb(" + (ini_bgclr_r+space_clr*show_divs) + "," + (ini_bgclr_g+space_clr*show_divs) + "," + (ini_bgclr_b+space_clr*show_divs) + ")"
+						});
+						loop_backarray.eq(j).removeAttr("id").removeClass("fg").addClass("bg");		
+					};
+
+					var loop_backarray = $(".frame>div").slice(current_top+show_divs,disappear_from);
+					for (var j = loop_backarray.length - 1; j >= 0; j--) {
+						loop_backarray.eq(j).css({
+							"display":"none",
+							"z-index":0,
+							"top":(-1*show_divs*space_top) + "%",
+							"left":(show_divs*space_left) + "%",
+							"width":(100 - 2 * show_divs*space_left) + "%"
+						});
+						loop_backarray.eq(j).removeClass("fg").addClass("bg");		
+					};
+
+					//selected element and num=show_divs divs after it move and appear
+					var loop_backarray = $(".frame>div").slice(current_top,current_top+show_divs);
+					for (var j = loop_backarray.length - 1; j >= 0; j--) {
+					// .each(function(index){
+						top_px = j * (-1) * space_top;
+						left_percent = j * space_left;
+						layer_index = show_divs + 1 - j;
+						bg_color_r = ini_bgclr_r + j * space_clr;
+						bg_color_g = ini_bgclr_g + j * space_clr;
+						bg_color_b = ini_bgclr_b + j * space_clr;
+						width_percent = 100 - 2* left_percent;
+						loop_backarray.eq(j).fadeIn(100).animate({
+							top:top_px +"px",
+							left:left_percent +"%",
+							width:width_percent +"%"
+						},1000,"linear").attr("id","id_"+(j+1));
+						loop_backarray.eq(j).removeClass("fg").css({"z-index":layer_index});
+						loop_backarray.eq(j).children(".time").css({"background-color": "rgb(" + bg_color_r + "," + bg_color_g + "," + bg_color_b + ")"});
+					};
+
+				};
+				prev_top = current_top; //remember current top element
+			}
+			function rst_flyState(){
+				action_done1 = ($(".frame>div").eq(prev_top + show_divs - 1).css("top") == ((-1*space_top*(show_divs-1))+"px"));
+				// action_done2 = ($(".frame>div").eq(prev_top + show_divs - 1).css("top") == ((-1*space_top*(show_divs-1))+"px"));
+				if ( (fly_state != 0) && action_done1 ) {
+					fly_state = 0;
+				};
+				// else if ((fly_state == 2) && action_done2) {
+				// 	fly_state = 0;
+				// };
+				setTimeout(rst_flyState,10)
+			}
+			rst_flyState();
+
+			//side bar fish eye
+			$("#biuuu").FishEye({
+				fishEyeItemName: ".FishEye",
+				maxScalePct: 60,
+				scaleStepPct: 30
+			});
+		});
+
+	</script>	
+
+	<style type="text/css">
+		body{
+			background-color: #000;
+		}
+		.header{ 
+			background:#fff url(images/banner_05a.jpg) no-repeat; 
+			height:133px; 
+			width:963px; 
+			float:left; 
+			position:relative; /* 相对定位，作为绝对定位的img的父级 */
+		} 
+		.header img { 
+			vertical-align:top; /** 兼容IE6，去掉IE6中img下面有空隙 **/
+			position:absolute; /** 绝对定位，所有的图片都显示在同一个位置 **/
+			right:0; 
+		} 
+		.frame{
+			width:50%;
+			height:50%;
+			/*border:1px #000 solid;*/
+			position: relative;
+			left:25%;
+			top:30%;
+		}
+		.window{
+			position: absolute;
+			display: inline-block;
+			text-align: center;
+			border:1px #b8b8b8 solid;
+			background-color: #fff;
+			width:100%;
+			height: 100%;
+		}
+
+		.window .time{
+			width: 100%;
+			height:10%;
+			line-height: 34px;
+			font-size: 20px;
+			color:#fff;
+		}
+		.window .content{
+			width:100%;
+			height:90%;
+			line-height: 150px;
+			font-size:50px;
+		}
+		#biuuu 
+		{
+			position: absolute;
+			width:150px;
+			border: 1px solid #000;
+			z-index: 1000;
+			top:100px;
+			right:0px;
+		}
+		#biuuu .ul{
+			list-style: none;
+			display: inline-block;
+			text-align: right;
+		}			
+		.FishEye
+		{
+			float: right;
+			margin:5px 0px 5px 0px;
+		}
+		
+
+		.FishEyeStandard
+		{
+			display: inline-block;
+			height: 5px;
+			width: 60%;
+			background-color: #ddd;
+			clear:both;
+		}
+		.FishEyeStandard.year{
+			background-color: #ff00ff;
+			width:70%;
+		}
+		.FishEyeStandard span{
+			position: relative;
+			display: inline-block;
+			width:48px;
+			left:-55px;
+			color:#fff;
+			font-size: 12px;
+			text-align: right;
+		}
+		.FishEyeStandard.year span{
+			color:#ff00ff;
+			text-align: left;
+		}
+	</style>
+</head>
+<body>
+	<!-- attention:time style should be yyyy.mm.dd -->
+	<div class="frame">
+		<div class="window">
+			<div class="time">2013.02.25</div>
+			<div class="content">Contents goes here! </div>
+		</div>
+		<div class="window">
+			<div class="time">2013.01.14</div>
+			<div class="content">Contents goes here!</div>
+		</div>
+		<div class="window">
+			<div class="time">2012.12.23</div>
+			<div class="content">Contents goes here!</div>
+		</div>
+		<div class="window" >
+			<div class="time">2012.12.17</div>
+			<div class="content">Contents goes here! </div>
+		</div>
+		<div class="window" >
+			<div class="time">2012.09.21</div>
+			<div class="content">Contents goes here!</div>
+		</div>
+		<div class="window" >
+			<div class="time">2012.08.20</div>
+			<div class="content">Contents goes here!</div>
+		</div>
+		<div class="window">
+			<div class="time">2012.08.19</div>
+			<div class="content">Contents goes here! </div>
+		</div>
+		<div class="window">
+			<div class="time">2012.03.20</div>
+			<div class="content">Contents goes here!</div>
+		</div>
+		<div class="window">
+			<div class="time">2012.01.15</div>
+			<div class="content">Contents goes here!</div>
+		</div>
+		<div class="window">
+			<div class="time">2012.01.13</div>
+			<div class="content">Contents goes here! </div>
+		</div>
+		<div class="window">
+			<div class="time">2012.01.05</div>
+			<div class="content">Contents goes here!</div>
+		</div>
+		<div class="window">
+			<div class="time">2012.01.01</div>
+			<div class="content">Contents goes here!</div>
+		</div>
+		<div class="window" >
+			<div class="time">2011.12.30</div>
+			<div class="content">Contents goes here! </div>
+		</div>
+		<div class="window">
+			<div class="time">2011.05.20</div>
+			<div class="content">Contents goes here!</div>
+		</div>
+		<div class="window">
+			<div class="time">2011.04.20</div>
+			<div class="content">Contents goes here!</div>
+		</div>
+		<div class="window">
+			<div class="time">2011.03.20</div>
+			<div class="content">Contents goes here! </div>
+		</div>
+		<div class="window" >
+			<div class="time">2011.02.20</div>
+			<div class="content">Contents goes here!</div>
+		</div>
+		<div class="window" >
+			<div class="time">2011.01.20</div>
+			<div class="content">Contents goes here!</div>
+		</div>
+		
+	</div>
+
+	<!-- attention:time style should be yyyy.mm -->
+	<!-- attention:time of year yyyy comes before yyyy.01 -->
+	<!-- attention:if the time is yyyy ,class of year should be added -->
+	<div id="biuuu">
+		<ul>
+			<li class="FishEye FishEyeStandard"><span>2011.06</span></li>
+			<li class="FishEye FishEyeStandard"><span>2011.07</span></li>
+			<li class="FishEye FishEyeStandard"><span>2011.08</span></li>
+			<li class="FishEye FishEyeStandard"><span>2011.09</span></li>
+			<li class="FishEye FishEyeStandard"><span>2011.10</span></li>
+			<li class="FishEye FishEyeStandard"><span>2011.11</span></li>
+			<li class="FishEye FishEyeStandard"><span>2011.12</span></li>
+			<li class="FishEye FishEyeStandard year"><span>2012</span></li>
+			<li class="FishEye FishEyeStandard"><span>2012.01</span></li>
+			<li class="FishEye FishEyeStandard"><span>2012.02</span></li>
+			<li class="FishEye FishEyeStandard"><span>2012.03</span></li>
+			<li class="FishEye FishEyeStandard"><span>2012.04</span></li>
+			<li class="FishEye FishEyeStandard"><span>2012.05</span></li>
+			<li class="FishEye FishEyeStandard"><span>2012.06</span></li>
+			<li class="FishEye FishEyeStandard"><span>2012.07</span></li>
+			<li class="FishEye FishEyeStandard"><span>2012.08</span></li>
+			<li class="FishEye FishEyeStandard"><span>2012.09</span></li>
+			<li class="FishEye FishEyeStandard"><span>2012.10</span></li>
+			<li class="FishEye FishEyeStandard"><span>2012.11</span></li>
+			<li class="FishEye FishEyeStandard"><span>2012.12</span></li>
+			<li class="FishEye FishEyeStandard year"><span>2013</span></li>
+			<li class="FishEye FishEyeStandard"><span>2013.01</span></li>
+			<li class="FishEye FishEyeStandard"><span>2013.02</span></li>
+			<li class="FishEye FishEyeStandard"><span>2013.03</span></li>
+		</ul>
+
+	</div>
+
+	<!-- attention: This div is for background stars effect, contents inside will be added automaticlly by javascript. -->
+	<!-- attention: It's id shouldn't be changed. -->
+	<div id="bg_stars"></div>
+</body>
+</html>
